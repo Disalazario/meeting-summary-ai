@@ -1,0 +1,37 @@
+# Минимальный CI: линт бэкенда (ruff) + линт и сборка фронтенда.
+# Тяжёлые зависимости (torch, faster-whisper, Ollama) в CI не ставятся —
+# интеграционные проверки и evals выполняются локально (см. evals/run_eval.sh).
+stages:
+  - lint
+  - build
+
+backend-lint:
+  stage: lint
+  image: python:3.10-slim
+  script:
+    - pip install --quiet "ruff==0.15.*"
+    - ruff check backend/app
+
+frontend-lint:
+  stage: lint
+  image: node:22-slim
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - frontend/node_modules/
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+    - npm run lint
+
+frontend-build:
+  stage: build
+  image: node:22-slim
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - frontend/node_modules/
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+    - npm run build

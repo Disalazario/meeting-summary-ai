@@ -1,0 +1,50 @@
+description: "Meeting Summary AI — Prompt Evaluation (Topics)"
+
+providers:
+  - id: ollama:chat:qwen2.5:7b
+    config:
+      apiBaseUrl: http://localhost:11434/v1
+      apiKeyRequired: false
+
+defaultTest:
+  options:
+    provider:
+      id: ollama:chat:qwen2.5:7b
+      config:
+        apiBaseUrl: http://localhost:11434/v1
+        apiKeyRequired: false
+
+prompts:
+  - id: topics
+    raw: |
+      [
+        {
+          "role": "system",
+          "content": "Ты определяешь ключевые темы совещания. Отвечай ТОЛЬКО валидным JSON."
+        },
+        {
+          "role": "user",
+          "content": "Расшифровка совещания:\n{{transcript}}\n\n---\nОпредели 3-7 ключевых тем этого совещания. Для каждой темы укажи краткое название (2-4 слова).\n\nJSON: {\"topics\": [\"тема 1\", \"тема 2\", ...]}"
+        }
+      ]
+
+tests:
+  - description: "Topics from project status meeting (sample 1)"
+    vars:
+      transcript: file://fixtures/transcript_sample_1.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.topics !== undefined && Array.isArray(obj.topics) && obj.topics.length >= 3 && obj.topics.length <= 7;
+
+  - description: "Topics from budget planning meeting (sample 2)"
+    vars:
+      transcript: file://fixtures/transcript_sample_2.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.topics !== undefined && Array.isArray(obj.topics) && obj.topics.length >= 3;

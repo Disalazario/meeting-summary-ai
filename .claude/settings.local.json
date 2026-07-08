@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ollama:*)",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"which ollama && ollama --version\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"nvidia-smi\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"systemctl status ollama --no-pager\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"journalctl -u ollama -n 50 --no-pager 2>/dev/null || cat /var/log/ollama.log 2>/dev/null || echo ''no logs found''\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"curl -s http://localhost:11434/api/tags 2>/dev/null | head -100\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"ollama list 2>/dev/null\")",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c \"nvcc --version 2>/dev/null || echo 'nvcc not found'\":*)",
+      "Bash(wsl -d Ubuntu-20.04 -- bash -c:*)"
+    ]
+  }
+}

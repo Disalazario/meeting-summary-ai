@@ -1,0 +1,62 @@
+description: "Meeting Summary AI — Prompt Evaluation (Tasks)"
+
+providers:
+  - id: ollama:chat:qwen2.5:7b
+    config:
+      apiBaseUrl: http://localhost:11434/v1
+      apiKeyRequired: false
+
+defaultTest:
+  options:
+    provider:
+      id: ollama:chat:qwen2.5:7b
+      config:
+        apiBaseUrl: http://localhost:11434/v1
+        apiKeyRequired: false
+
+prompts:
+  - id: tasks
+    raw: |
+      [
+        {
+          "role": "system",
+          "content": "Ты — аналитик, извлекающий КОНКРЕТНЫЕ задачи из протоколов совещаний. Отвечай ТОЛЬКО валидным JSON. Язык — русский.\n\nПример:\nВвод: \"[00:00 - 01:00] Иван: Мария, подготовь отчёт по продажам до пятницы. [01:00 - 01:30] Мария: Хорошо. Олег, пришли мне данные по клиентам. [01:30 - 02:00] Иван: И ещё надо бы подумать о стратегии на следующий квартал.\"\nВывод: {\"tasks\": [{\"description\": \"Подготовить отчёт по продажам\", \"assignee\": \"Мария\", \"deadline\": \"до пятницы\"}, {\"description\": \"Прислать данные по клиентам Марии\", \"assignee\": \"Олег\", \"deadline\": null}]}"
+        },
+        {
+          "role": "user",
+          "content": "Расшифровка совещания:\n{{transcript}}\n\n---\nИзвлеки из расшифровки ТОЛЬКО конкретные задачи и поручения.\nСначала выведи задачи с явными дедлайнами и ответственными, затем остальные.\n\nЗадача ОБЯЗАТЕЛЬНО должна соответствовать ВСЕМ критериям:\n1. Содержит конкретное действие (глагол: подготовить, отправить, разработать, проверить, написать, созвониться и т.д.)\n2. Понятно ЧТО именно нужно сделать (не абстрактное пожелание)\n3. Кто-то взял на себя ответственность ИЛИ кому-то поручили выполнение\n\nНЕ извлекай:\n- Общие обсуждения и мнения (\"надо бы подумать...\", \"хорошо бы...\")\n- Констатации фактов (\"мы решили что...\", \"договорились что позиция такая...\")\n- Вопросы без конкретных поручений\n- Повторяющиеся формулировки одной и той же задачи (оставляй одну, наиболее полную)\n\nОтветь ТОЛЬКО валидным JSON-объектом. Пример формата:\n  \"tasks\": [\n    \"description\": \"Подготовить отчёт по продажам за Q1\", \"assignee\": \"Иван\" или null, \"deadline\": \"до пятницы\" или null\n  ]\n\nПравила:\n- Ключ массива — ТОЛЬКО \"tasks\".\n- Извлекай только из текста, не выдумывай.\n- Если конкретных задач нет — верни пустой массив tasks.\n- Описание задачи должно начинаться с глагола.\n- Значения на русском.\n- Никакого текста вне JSON."
+        }
+      ]
+
+tests:
+  - description: "Tasks from project status meeting (sample 1)"
+    vars:
+      transcript: file://fixtures/transcript_sample_1.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.tasks !== undefined && Array.isArray(obj.tasks) && obj.tasks.length >= 3;
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.tasks.every(t => t.description && typeof t.description === 'string');
+      - type: llm-rubric
+        value: "Задачи должны включать исправление бага авторизации (Антон), подготовку макета (Олег), деплой на стейджинг (Пётр), подготовку презентации (Мария)"
+
+  - description: "Tasks from budget planning meeting (sample 2)"
+    vars:
+      transcript: file://fixtures/transcript_sample_2.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.tasks !== undefined && Array.isArray(obj.tasks) && obj.tasks.length >= 2;
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.tasks.some(t => t.deadline !== null && t.deadline !== undefined);
+      - type: llm-rubric
+        value: "Должны быть задачи: Виктору подготовить смету до пятницы, Ольге проверить договор и подготовить бюджетный план"

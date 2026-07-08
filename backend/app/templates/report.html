@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { margin: 2cm; size: A4; }
+  body {
+    font-family: "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #2d3748;
+  }
+  h1 {
+    font-size: 20pt;
+    color: #1a365d;
+    margin-bottom: 4px;
+    border-bottom: 3px solid #2b6cb0;
+    padding-bottom: 8px;
+  }
+  h2 {
+    font-size: 13pt;
+    color: #2c5282;
+    border-bottom: 2px solid #bee3f8;
+    padding-bottom: 5px;
+    margin-top: 28px;
+    margin-bottom: 12px;
+  }
+  .meta {
+    color: #4a5568;
+    font-size: 10pt;
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+  }
+  .meta-row { margin-bottom: 3px; }
+  .meta-label { font-weight: bold; color: #2d3748; }
+  .topics-container { margin: 12px 0; }
+  .topic-tag {
+    display: inline-block;
+    background: #ebf4ff;
+    color: #2b6cb0;
+    border: 1px solid #bee3f8;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 9pt;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .brief {
+    background: #ebf8ff;
+    border-left: 4px solid #3182ce;
+    padding: 12px 16px;
+    margin: 15px 0;
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .summary-text {
+    text-align: justify;
+    line-height: 1.7;
+  }
+  .decision-list { padding-left: 20px; }
+  .decision-list li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th {
+    background: #2c5282;
+    color: white;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10pt;
+    border: 1px solid #2c5282;
+  }
+  td {
+    padding: 8px 10px;
+    font-size: 10pt;
+    border: 1px solid #cbd5e0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .task-done td { color: #a0aec0; }
+  .task-done .task-desc { text-decoration: line-through; }
+  .status-done {
+    color: #276749;
+    font-weight: bold;
+  }
+  .status-pending {
+    color: #c05621;
+    font-weight: bold;
+  }
+  .segment { margin-bottom: 8px; page-break-inside: avoid; }
+  .segment-speaker { font-weight: bold; color: #2c5282; }
+  .segment-time { font-size: 9pt; color: #a0aec0; }
+  .segment-text { margin-left: 10px; }
+  .footer {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8pt;
+    color: #a0aec0;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <div class="meta">
+    <div class="meta-row"><span class="meta-label">Дата:</span> {{ date }}</div>
+    <div class="meta-row"><span class="meta-label">Длительность:</span> {{ duration or '—' }}</div>
+    <div class="meta-row"><span class="meta-label">Участники ({{ speakers | length }}):</span> {{ speakers | join(', ') }}</div>
+  </div>
+
+  {% if topics %}
+  <h2>Темы совещания</h2>
+  <div class="topics-container">
+    {% for topic in topics %}
+    <span class="topic-tag">{{ topic }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if brief %}
+  <h2>Краткий пересказ</h2>
+  <div class="brief">{{ brief }}</div>
+  {% endif %}
+
+  {% if summary_text %}
+  <h2>Подробное саммари</h2>
+  <div class="summary-text">{{ summary_text }}</div>
+  {% endif %}
+
+  {% if key_decisions %}
+  <h2>Ключевые решения</h2>
+  <ol class="decision-list">
+    {% for decision in key_decisions %}
+    <li>{{ decision }}</li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+
+  {% if tasks %}
+  <h2>Задачи ({{ tasks | length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 5%">№</th>
+        <th style="width: 45%">Описание</th>
+        <th style="width: 20%">Ответственный</th>
+        <th style="width: 15%">Срок</th>
+        <th style="width: 15%">Статус</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr{% if task.done %} class="task-done"{% endif %}>
+        <td>{{ loop.index }}</td>
+        <td class="task-desc">{{ task.description }}</td>
+        <td>{{ task.assignee or '—' }}</td>
+        <td>{{ task.deadline or '—' }}</td>
+        <td class="{{ 'status-done' if task.done else 'status-pending' }}">{{ 'Выполнено' if task.done else 'В работе' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2>Полная расшифровка</h2>
+  {% for seg in segments %}
+  <div class="segment">
+    <span class="segment-time">[{{ seg.time }}]</span>
+    <span class="segment-speaker">{{ seg.speaker }}:</span>
+    <div class="segment-text">{{ seg.text }}</div>
+  </div>
+  {% endfor %}
+
+  <div class="footer">
+    Отчёт сгенерирован автоматически — Meeting Summary AI
+  </div>
+</body>
+</html>

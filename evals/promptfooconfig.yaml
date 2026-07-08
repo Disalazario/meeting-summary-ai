@@ -1,0 +1,58 @@
+description: "Meeting Summary AI — Prompt Evaluation (Summary)"
+
+providers:
+  - id: ollama:chat:qwen2.5:7b
+    config:
+      apiBaseUrl: http://localhost:11434/v1
+      apiKeyRequired: false
+
+defaultTest:
+  options:
+    provider:
+      id: ollama:chat:qwen2.5:7b
+      config:
+        apiBaseUrl: http://localhost:11434/v1
+        apiKeyRequired: false
+
+prompts:
+  - id: summary
+    raw: |
+      [
+        {
+          "role": "system",
+          "content": "Ты генерируешь JSON-саммари совещаний. Отвечай ТОЛЬКО валидным JSON. Язык значений — русский.\n\nПример:\nВвод: \"[00:00 - 01:30] Иван: Нужно запустить рассылку до конца недели. [01:30 - 02:15] Мария: Я подготовлю шаблон письма, а дизайн попрошу у Олега. [02:15 - 03:00] Иван: Хорошо, бюджет на рассылку утверждён — 50 тысяч.\"\nВывод: {\"brief\": \"Обсуждение запуска email-рассылки. Мария готовит шаблон, дизайн делает Олег. Бюджет 50 тысяч утверждён.\", \"summary\": \"Иван поставил задачу запустить email-рассылку до конца недели. Мария взяла на себя подготовку шаблона письма и планирует привлечь Олега для дизайна. Иван подтвердил, что бюджет в размере 50 тысяч рублей утверждён.\", \"key_decisions\": [\"Запустить рассылку до конца недели\", \"Бюджет 50 тысяч утверждён\"]}"
+        },
+        {
+          "role": "user",
+          "content": "Расшифровка совещания:\n{{transcript}}\n\n---\nСначала определи основные темы обсуждения, затем для каждой темы выдели ключевые моменты.\n\nСоздай саммари этой расшифровки. Ответь ТОЛЬКО валидным JSON-объектом с тремя ключами.\n\nПример формата:\n  \"brief\": \"краткий пересказ в 2-3 предложения\",\n  \"summary\": \"подробное саммари с группировкой по темам\",\n  \"key_decisions\": [\"решение 1\", \"решение 2\"]\n\nПравила:\n- Ключи ТОЛЬКО \"brief\", \"summary\", \"key_decisions\" — именно так, на английском.\n- Все значения — на русском языке.\n- Пиши только на основе расшифровки, не додумывай.\n- Указывай кто что предложил/решил.\n- Никакого текста вне JSON."
+        }
+      ]
+
+tests:
+  - description: "Summary of project status meeting (sample 1)"
+    vars:
+      transcript: file://fixtures/transcript_sample_1.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.brief !== undefined && obj.summary !== undefined && obj.key_decisions !== undefined;
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          Array.isArray(obj.key_decisions) && obj.key_decisions.length > 0;
+      - type: llm-rubric
+        value: "Саммари должно упоминать баг с авторизацией, платёжный шлюз, дашборд, демо для заказчика и релиз в понедельник"
+
+  - description: "Summary of budget planning meeting (sample 2)"
+    vars:
+      transcript: file://fixtures/transcript_sample_2.txt
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const obj = JSON.parse(output);
+          obj.brief !== undefined && obj.summary !== undefined && obj.key_decisions !== undefined;
+      - type: llm-rubric
+        value: "Саммари должно упоминать бюджет 1.8 миллиона на маркетинг, 700 тысяч на продукт, 150 тысяч на обучение и резерв 5%"

@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# Локальные секреты (пароли VPS, бэкап-токены и т.п.)
+.secrets/
+*.pem
+*.key
+!.githooks/**/*.key
+*.crt
+*.p12
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads
+backend/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic
+backend/alembic/versions/__pycache__/
+
+# Auth data (encrypted cookies, keys)
+backend/data/
+
+# Logs
+backend/logs/
+
+# Mini App build
+frontend/miniapp/dist/
+
+# Runtime PIDs
+.pids/
+
+# Claude worktrees / local agent state
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Local git bundles
+*.bundle
+
+# Playwright artifacts
+frontend/test-results/
+frontend/playwright-report/
+
+
+# Backups
+backups/
+
+# Рабочие заметки
+handle.md
+promt.md

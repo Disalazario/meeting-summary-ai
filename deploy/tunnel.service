@@ -1,0 +1,40 @@
+# Systemd unit для автозапуска SSH-туннеля.
+#
+# В WSL2 (Ubuntu 22.04+) есть нативный systemd — включается через
+# /etc/wsl.conf:
+#     [boot]
+#     systemd=true
+# затем перезапустить WSL: `wsl --shutdown` в Windows.
+#
+# Установка:
+#   sudo cp deploy/tunnel.service /etc/systemd/system/meet-tunnel.service
+#   # отредактируйте User=, ExecStart= под себя
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now meet-tunnel.service
+#   sudo systemctl status meet-tunnel.service
+
+[Unit]
+Description=Reverse SSH tunnel to VPS for Meeting Summary AI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=user
+Environment=AUTOSSH_GATETIME=0
+# впишите свои значения:
+#   - путь к ключу
+#   - root@<VPS_IP>
+ExecStart=/usr/bin/autossh -M 0 -N \
+    -i /home/user/.ssh/meet_tunnel \
+    -o ExitOnForwardFailure=yes \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=3 \
+    -o StrictHostKeyChecking=accept-new \
+    -R 127.0.0.1:18000:127.0.0.1:8000 \
+    root@<VPS_IP>
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
